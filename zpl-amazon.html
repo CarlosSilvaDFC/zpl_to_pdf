@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/printer.ico" type="image/x-icon">
+  <title>ZPL to PDF Converter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background-color: #fff;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+      font-size: 45px;
+    }
+
+    input[type="file"] {
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #response {
+      margin-top: 20px;
+    }
+    #monitorButton, .uploadd {
+      margin-top: 30px;
+    }
+    p {
+      font-size: 14px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>ZPL > PDF Converter</h1>
+    <input type="file" id="fileInput" accept=".zpl"><br>
+    <button class="uploadd" onclick="document.getElementById('fileInput').click()">Upload ZPL File</button><br>
+    <button id="monitorButton">Escolher Pasta / IMPRIMIR</button><br>
+    <div id="response"></div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('monitorButton').addEventListener('click', monitorDownloadsFolder);
+    });
+
+    async function convertZplToPdf(file) {
+      const reader = new FileReader();
+
+      reader.onload = async function(event) {
+        const zplContent = event.target.result;
+
+        try {
+          const response = await fetch('http://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Accept': 'application/pdf'
+            },
+            body: zplContent
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to convert ZPL to PDF');
+          }
+
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+
+          // Open PDF in new tab and print
+          const pdfWindow = window.open(url);
+          pdfWindow.onload = function() {
+            pdfWindow.print();
+          };
+
+        } catch (error) {
+          console.error('Error:', error);
+          alert('Failed to convert ZPL to PDF');
+        }
+      };
+
+      reader.readAsText(file);
+    }
+
+    async function monitorDownloadsFolder() {
+      try {
+        const dirHandle = await window.showDirectoryPicker();
+        const permission = await dirHandle.requestPermission({ mode: 'readwrite' });
+        if (permission !== 'granted') {
+          throw new Error('Permissão negada');
+        }
+
+        // Encontra o arquivo ZPL mais recente
+        let latestFile = null;
+        let latestTime = 0; 
+        for await (const entry of dirHandle.values()) {
+          if (entry.kind === 'file' && entry.name.endsWith('.zpl')) {
+            const file = await entry.getFile();
+            if (file.lastModified > latestTime) {
+              latestFile = file;
+              latestTime = file.lastModified;
+            }
+          }
+        }
+
+        // Converte apenas o arquivo mais recente (se encontrado)
+        if (latestFile) {
+          await convertZplToPdf(latestFile);
+        } else {
+          console.log('Nenhum arquivo ZPL encontrado na pasta de downloads.');
+        }
+      } catch (error) {
+        console.error('Erro ao acessar a pasta de downloads:', error);
+      }
+    }
+
+    // Função para lidar com a seleção de arquivos manualmente
+    async function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (file) {
+        await convertZplToPdf(file);
+      }
+    }
+
+    // Evento de clique para o botão de upload manual
+    document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+  </script>
+</body>
+</html>

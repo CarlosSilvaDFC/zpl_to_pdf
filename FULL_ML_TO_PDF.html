@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/path/to/printer.ico" type="image/x-icon">
+  <title>ETIQUETAS FULL ML - PRODUTOS</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background-color: #fff;
+      padding: 20px 30px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      font-size: 25px;
+    }
+
+    input[type="file"] {
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #d9ff00;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #c6e70d;
+      box-shadow: 3px 3px 3px #e9e9e9;
+    }
+
+    #response {
+      margin-top: 20px;
+    }
+    #monitorButton{
+        display: none;
+    }
+    #monitorButton, .uploadd {
+      margin-top: 15px;
+    }
+
+    p {
+      font-size: 14px;
+      color: #333;
+    }
+    .input-arch{ display: none;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>ETIQUETAS FULL ML <br> PRODUTOS</h2>
+    <input class="input-arch" type="file" id="fileInput" accept=".zpl"><br>
+    <button class="uploadd" onclick="document.getElementById('fileInput').click()">ESCOLHER ARQUIVO</button><br>
+    <button id="monitorButton">Escolher Pasta / IMPRIMIR</button><br>
+    <div id="response"></div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('monitorButton').addEventListener('click', monitorDownloadsFolder);
+    });
+    async function convertZplToPdf(file) {
+  const reader = new FileReader();
+
+  reader.onload = async function(event) {
+    let zplContent = event.target.result;
+
+    // Dimensões da etiqueta em mm
+    const labelWidthMM = 3.94 / 2;  // mm
+    const labelHeightMM = 0.98;     // mm
+    const dpi = 8;                  // pontos por mm (dpmm)
+
+    // Converter mm para pontos
+    const labelWidthPoints = labelWidthMM * dpi;
+    const labelHeightPoints = labelHeightMM * dpi;
+
+    // Ajustar as coordenadas da etiqueta para centralizar o conteúdo
+    const adjustForCentering = (labelWidthPoints / 2) + ',' + (labelHeightPoints / 2);
+    zplContent = zplContent.replace(/^LH[^\n]*/, `^LH${adjustForCentering}`);
+
+    try {
+      // API da Labelary - Remover a limitação de uma página
+      const url = `https://api.labelary.com/v1/printers/${dpi}dpmm/labels/${labelWidthMM}x${labelHeightMM}/`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/pdf'
+        },
+        body: zplContent
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error('Erro da API Labelary: ' + errorText);
+      }
+
+      const blob = await response.blob();
+      const pdfUrl = URL.createObjectURL(blob);
+
+      // Criar um link para baixar o PDF
+      const link = document.createElement('a');
+      link.href = pdfUrl;
+      link.download = 'etiquetas.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Mensagem de sucesso
+      document.getElementById('response').innerHTML = '<p>PDF gerado e baixado com sucesso!</p>';
+
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Falha ao converter ZPL para PDF: ' + error.message);
+    }
+  };
+
+  reader.readAsText(file);
+}
+
+
+    async function monitorDownloadsFolder() {
+      try {
+        const dirHandle = await window.showDirectoryPicker();
+        const permission = await dirHandle.requestPermission({ mode: 'readwrite' });
+        if (permission !== 'granted') {
+          throw new Error('Permissão negada');
+        }
+
+        // Encontra o arquivo ZPL mais recente
+        let latestFile = null;
+        let latestTime = 0;
+        for await (const entry of dirHandle.values()) {
+          if (entry.kind === 'file' && entry.name.endsWith('.zpl')) {
+            const file = await entry.getFile();
+            if (file.lastModified > latestTime) {
+              latestFile = file;
+              latestTime = file.lastModified;
+            }
+          }
+        }
+
+        // Converte apenas o arquivo mais recente (se encontrado)
+        if (latestFile) {
+          await convertZplToPdf(latestFile);
+        } else {
+          console.log('Nenhum arquivo ZPL encontrado na pasta de downloads.');
+        }
+      } catch (error) {
+        console.error('Erro ao acessar a pasta de downloads:', error);
+      }
+    }
+
+    // Função para lidar com a seleção de arquivos manualmente
+    async function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (file) {
+        await convertZplToPdf(file);
+      }
+    }
+
+    // Evento de clique para o botão de upload manual
+    document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+  </script>
+  
+</body>
+</html>

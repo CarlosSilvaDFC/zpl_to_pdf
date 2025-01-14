@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/PROJETO AGRUPADO/assets/printer.ico" type="image/x-icon">
+  <link rel="stylesheet" href="/PROJETO AGRUPADO/index-acess-folder.css">
+  <title>Conversor ZPL</title>
+  
+</head>
+<header>
+  <div class="center-head">
+    <a style="margin: 0 30px;" href="/PROJETO AGRUPADO/page-ML.html">
+      <img class="imagem" src="/PROJETO AGRUPADO/assets/logo-mercado-livre.png" alt="">
+    </a>
+    <a href="/PROJETO AGRUPADO/index-acess-folder.html">
+      <img style:"margin-top: 30px;" class="imagem" src="/PROJETO AGRUPADO/assets/63c7cf41dcf6a412600c7b3f_amazon.png" alt="">
+    </a>
+  </div>
+</header>
+
+<body>
+  <div class="container">
+    <div class="box-content">
+      <img class='imagem' src="/PROJETO AGRUPADO/assets/63c7cf41dcf6a412600c7b3f_amazon.png" alt="logo-amazon">
+      <input style="display: none;" type="file" id="fileInput" accept=".zpl"><br>
+      <button class="uploadd" onclick="document.getElementById('fileInput').click()">Upload ZPL File</button><br>
+      <button id="monitorButton">Escolher Pasta / IMPRIMIR</button><br>
+      <div style="display: none;" id="response"></div> 
+    </div>
+
+   <!-- <div class="box-content box-ml">
+      <img class='imagem' src="/PROJETO AGRUPADO/assets/logo-mercado-livre.png" alt="">
+      <input style="display: none;" class="input-arch" type="file" id="fileInput-ml" accept=".zpl"><br>
+      <button class="uploadd" onclick="document.getElementById('fileInput-ml').click()">ESCOLHER ARQUIVO</button><br>
+      <button style="display: none;"id="monitorButton-ml">Escolher Pasta / IMPRIMIR</button><br>
+      <div style="display: none;" id="response"></div> 
+    </div>
+  </div>
+
+  <script src="/PROJETO AGRUPADO/full-ml-to-pdf.js"></script> -->
+ <script src="/PROJETO AGRUPADO/index-acess-folder.js"></script>
+</body>
+</html>
