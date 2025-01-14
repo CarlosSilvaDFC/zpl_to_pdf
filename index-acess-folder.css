@@ -28,11 +28,11 @@ header a{
   .container{
     position: absolute;
     width: 100%;
-    height: calc(100% - 115px);
+    height: calc(100% - 120px);
     display: flex;
     flex-wrap: nowrap;
     justify-content:space-around;
-    max-width: 1280px;
+  
     
   }
   .container .box-content{
