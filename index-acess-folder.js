@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const zplContent = event.target.result;
 
       try {
-        const response = await fetch('http://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
+        const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
